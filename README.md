@@ -6,6 +6,8 @@ to a reference sequence using minimap2, convert from .sam to .bam using samtools
   
 Some difficulties encountered that are specific to the aims of this project include: 1) draft assembly/consensus sequence generation for relatively small CIRCULAR plasmids (some reads span the entire plasmid and more) and 2) difficulty in SNP/indel variant calling using long-read HAPLOID sequence data. As new tools are developed and pre-existing tools are improved, this script/repository will be updated.     
   
+*In its current state, this script does not call variants (SNPs/indels) reliably; this part of the script is still being debugged. It does, however, generate multiple consensus files and draft assemblies that are generated using several different tools.*  
+
 **There are 5 general steps in this script: 1) Combine & Filter 2) Align/Map 3) Generate Consensus 4) Variant Call 5) Visualize Assemblies/Variants.** The 5th step is not executed by the script itself (see info below for options to visualize results).    
 
 ## Concatenate fastq files from sequence data generated from minKNOW ONT software
