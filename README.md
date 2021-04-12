@@ -19,37 +19,49 @@ Using NanoFilt with standard/fixed filtering conditions. These parameters can be
 `-q 12` option filters based on average quality score of 12  
 `--headcrop 50` filters by removing first 50bp of sequence  
 
-## ASSEMBLY USING REFERENCE with Minimap/Miniasm:   
+## ASSEMBLY USING REFERENCE with Minimap2/Miniasm:   
 Align reads with a reference sequence using minimap2 to align with reference sequence (used for ONT genomic reads).  
-`minimap2 -ax map-ont --MD *_ref.fasta trim.fastq > map_MM_ref_mapped.sam`  
+`minimap2 -x map-ont *_ref.fasta trim.fastq | gzip -1 > map_minimap_ref.paf.gz`  
+Assemble Untigs: `miniasm -f trim.fastq map_minimap_ref.paf.gz > map_minimap_ref.gfa`    
+Generate consensus by converting gfa to fasta: ``awk `/^S/{print ">"$2"\n"$3}' map_minimap_ref.gfa > map_minimap_ref.fasta``    
+Map Trimmed Reads onto Miniasm Assembly: `minimap2 map_minimap_ref.fasta trim.fastq > map_minimap_ref.racon.paf`  
+The 'map_minimap_ref.racon.paf' file will be used in the error correction step using Racon below.  
   
- `-a` option generates CIGAR and output alignment files in sam format (default is paf format)  
- `-x` in combination with `map-ont` specifies the seq data is derived from an Oxford Nanopore device to enhance read alignment.   
- `--MD` option ensures that the MD tag will be included in the sam output file. This is necessary for Sniffles.  
-   
- Then use samtools to convert files from sam to bam:  `samtools view -bS mapped.sam > mapped.bam`  
- Then use samtools to sort & index the bam file: `samtools sort -o mapped.sorted.bam mapped.bam` `samtools index mapped.sorted.bam`  
-  
-# DE NOVO ASSEMBLY with Shasta (generates contigs):  
+ 
+## DE NOVO ASSEMBLY with Shasta (generates contigs):  
 This will generate a new subfolder called "ShastaRun" which will contain many files, including Assembly.gfa and Assembly.fasta.   
 `shasta-Linus-0.7.0 --input *_all.fastq`  
 Error Correction using Racon can be applied to the Shasta mapped file -- to compare consensus assemblies generated using different alignment programs (Shasta vs. Minimap2/Miniasm)   
   
-# DE NOVO ASSEMBLY with Minimap/Miniasm (generates untigs):   
-Map Reads Onto Themselves -- Identifies Overlaps: `minimap2 -x ava-ont trim.fastq trim.fastq | gzip -1 > overlaps.paf.gz `  
+## DE NOVO ASSEMBLY with Minimap2/Miniasm (generates untigs):   
+Map Reads Onto Themselves -- Identifies Overlaps (untigs): `minimap2 -x ava-ont trim.fastq trim.fastq | gzip -1 > overlaps.paf.gz `  
 Assemble Untigs: `miniasm -f trim.fastq overlaps.paf.gz > untigs.gfa`    
-Convert gfa to fasta: ``awk `/^S/{print ">"$2"\n"$3}' untigs.gfa > untigs.fasta``    
+Generate consensus by converting gfa to fasta: ``awk `/^S/{print ">"$2"\n"$3}' untigs.gfa > untigs.fasta``    
+Map Trimmed Reads onto Miniasm Untigs Assembly: `minimap2 untigs.fasta trim.fastq > untigs.racon.paf`  
+The 'untigs.racon.paf' file will be used in the error correction step using Racon below.  
   
-# ERROR CORRECTION/GENERATE CONSENSUS SEQUENCE with Racon:  
+## ERROR CORRECTION/CONSENSUS SEQUENCE with Racon:  
 Racon was developed to complement minimap2/miniasm pipeline but can be used for any long-read assembly. It is used to correct draft assemblies.  
-## Map Trimmed Reads onto Miniasm Assembly  
-`minimap2 untigs.fasta trim.fastq > untigs.racon.paf`  
-## Build Consensus Using Trimmed Reads and Untigs/Minimap.Racon Assembly (ref seq assembly)    
-`racon trim.fastq untigs.racon.paf untigs.fasta > untigs.racon.consensus.fasta `  
-## Build Consensus Using Trimmed Reads and Contigs/Shasta Assembly (de novo assembly)  
-`racon trim.fastq `
+Build Consensus Using Trimmed Reads and Minimap/Untigs.Racon Assembly (from de novo assembly with Minimap):   
+`racon trim.fastq untigs.racon.paf untigs.fasta > map_minimap_denovo.racon.consensus.fasta `  
+Build Consensus Using Trimmed Reads and Contigs/Shasta Assembly (from de novo assembly with Shasta):  
+`racon trim.fastq overlaps.paf.gz ShastaRun/Assembly.fasta > map_shasta_denovo.racon.consensus.fasta` 
+Build Consensus Using Trimmed Reads and Minimap Assembly (from assembly using reference with Minimap):  
+`racon trim.fastq map_minimap_ref.racon.paf map_minimap_ref.fasta > map_minimap_ref.racon.consensus.fasta`
+Further iterations with Racon can be utilized (but are not included in this script currently); for example:  
+`minimap2 map_minimap_denovo.racon.consensus.fasta trim.fastq > map_minimap_denovo.racon2.paf`  
+`racon trim.fastq map_minimap_denovo.racon2.paf map_minimap_denovo.racon.consensus.fasta > map_minimap_ref.racon2.consensus.fasta`   
+  
+  
+## Compare the different assemblies (with Bandage)   
+1. Assembly from reference using Minimap2 (map_minimap_ref.gfa) 
+2. De Novo assembly using Minimap2 (map_minimap_denovo.gfa)
+3. De Novo assembly using Shasta (/ShastaRun/Assembly.gfa)
 
-
+## Compare the different consensus sequences (with dnadiff? tbd)    
+1. Assembly from reference using Minimap2 followed by error correction/consensus with Racon (map_minimap_denovo.racon.consensus.fasta)  
+2. De Novo assembly using Minimap2 followed by error correction/consensus with Racon (map_shasta_denovo.racon.consensus.fasta)  
+3. De Novo assembly using Shasta followed by error correction/consensus with Racon (map_minimap_ref.racon.consensus.fasta)  
 
 
 ## Variant Calling    
