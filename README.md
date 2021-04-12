@@ -28,7 +28,7 @@ Using NanoFilt with standard/fixed filtering conditions. These parameters can be
 Align reads with a reference sequence using minimap2 to align with reference sequence (used for ONT genomic reads).  
 `minimap2 -x map-ont *_ref.fasta trim.fastq | gzip -1 > map_minimap_ref.paf.gz`  
 Assemble Untigs: `miniasm -f trim.fastq map_minimap_ref.paf.gz > map_minimap_ref.gfa`    
-Generate consensus by converting gfa to fasta: ``awk `/^S/{print ">"$2"\n"$3}' map_minimap_ref.gfa > map_minimap_ref.fasta``    
+Generate consensus by converting gfa to fasta: ``awk `/^S/{print ">"$2"\n"$3}' map_minimap_ref.gfa > map_minimap_ref.fasta``     
 Map Trimmed Reads onto Miniasm Assembly: `minimap2 map_minimap_ref.fasta trim.fastq > map_minimap_ref.racon.paf`  
 The 'map_minimap_ref.racon.paf' file will be used in the error correction step using Racon below.  
   
@@ -50,10 +50,11 @@ Racon was developed to complement minimap2/miniasm pipeline but can be used for 
 Build Consensus Using Trimmed Reads and Minimap/Untigs.Racon Assembly (from de novo assembly with Minimap):   
 `racon trim.fastq untigs.racon.paf untigs.fasta > map_minimap_denovo.racon.consensus.fasta `  
 Build Consensus Using Trimmed Reads and Contigs/Shasta Assembly (from de novo assembly with Shasta):  
-`racon trim.fastq overlaps.paf.gz ShastaRun/Assembly.fasta > map_shasta_denovo.racon.consensus.fasta` 
-Build Consensus Using Trimmed Reads and Minimap Assembly (from assembly using reference with Minimap):  
-`racon trim.fastq map_minimap_ref.racon.paf map_minimap_ref.fasta > map_minimap_ref.racon.consensus.fasta`
-Further iterations with Racon can be utilized (but are not included in this script currently); for example:  
+`racon trim.fastq overlaps.paf.gz ShastaRun/Assembly.fasta > map_shasta_denovo.racon.consensus.fasta`   
+Build Consensus Using Trimmed Reads and Minimap Assembly (from assembly using reference with Minimap):    
+`racon trim.fastq map_minimap_ref.racon.paf map_minimap_ref.fasta > map_minimap_ref.racon.consensus.fasta`  
+  
+Further iterations with Racon can be utilized (but are not included in this script currently); for example:   
 `minimap2 map_minimap_denovo.racon.consensus.fasta trim.fastq > map_minimap_denovo.racon2.paf`  
 `racon trim.fastq map_minimap_denovo.racon2.paf map_minimap_denovo.racon.consensus.fasta > map_minimap_ref.racon2.consensus.fasta`   
   
