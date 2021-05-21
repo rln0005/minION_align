@@ -1,7 +1,9 @@
 # minION Alignment Sequence Analysis   
 **Please submit bugs under the 'Issues' tab. Send comments, corrections, or suggestions to RLN0005@auburn.edu  
+   
+For a video walkthrough, please see: https://www.youtube.com/watch?v=Uj9rs9EAMu8&t=17s   
   
-
+  
 *This script was initially intended to be used on sequence data from a circular haploid plasmid genome of approximately 37 kb that was sequenced using Oxford Nanopore's (ONT) minION device. It was intended to be used as a quick reference to determine if CRISPR-modified plasmid genomes were accurately constructed in the lab prior to transfection. Visualization of assmeblies using Bandage and variants using IGV allows regions of dissimilarity to be further investigated.* 
   
 This script (minION_align.sh) is designed to use sequence data from a Nanopore minION (or any long-read sequence data) specifically outputted from the minKNOW program (in .fastq format). The script will combine all .fastq files for an individual barcode into a single .fastq file, filter the reads using NanoFilt, map reads in a few different ways with different packages -- including de novo assembly using Shasta, de novo assembly using Minimap2/Miniasm, and assembly using a reference sequence using Minimap2/Miniasm. Racon will be used for error correction and to generate a consensus sequence for each of the assemblies.  
